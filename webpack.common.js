@@ -1,11 +1,12 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const { VueLoaderPlugin } = require('vue-loader')
 
 module.exports = {
   entry: path.resolve(__dirname, 'src', 'main.js'),
   output: {
     path: path.resolve(__dirname, 'docs'),
-    filename: '[name].[hash].js'
+    filename: '[name].[contenthash].js'
   },
 
   resolve: {
@@ -36,6 +37,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src', 'index.html')
-    })
+    }),
+    new VueLoaderPlugin()
   ]
 }
