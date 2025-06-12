@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot Stitcher</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to enhance the look and feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom focus ring for better accessibility and aesthetics */
+        .custom-focus-ring {
+            transition: box-shadow 0.2s ease-in-out;
+        }
+        .custom-focus-ring:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.6); /* A nice blue glow */
+        }
+        
+        /* Animation for elements fading in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Style for the file input label to make it look like a drop zone */
+        #drop-zone {
+            border: 2px dashed #4a5568;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        #drop-zone.dragover {
+            background-color: #2d3748;
+            border-color: #6366f1;
+        }
+
+        /* Hiding the actual file input */
+        #file-upload {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <div class="w-full max-w-5xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white tracking-tight">Screenshot Stitcher</h1>
+            <p class="mt-2 text-lg text-gray-400">Combine your screenshots into one long image, seamlessly.</p>
+        </header>
+
+        <main class="bg-gray-800/50 backdrop-blur-sm border border-gray-700/60 rounded-xl shadow-2xl p-6 sm:p-8">
+            <!-- Step 1: Upload Area -->
+            <div id="upload-step">
+                <label for="file-upload" id="drop-zone" class="flex flex-col items-center justify-center w-full p-8 text-center bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700/80">
+                    <svg class="w-12 h-12 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                    </svg>
+                    <p class="mb-2 text-lg font-semibold text-gray-300"><span class="font-bold text-indigo-400">Click to upload</span> or drag and drop</p>
+                    <p class="text-sm text-gray-500">PNG, JPG, or WEBP files</p>
+                </label>
+                <input id="file-upload" type="file" accept="image/png, image/jpeg, image/webp" multiple>
+            </div>
+
+            <!-- Step 2: Preview & Actions -->
+            <div id="preview-step" class="hidden">
+                <h2 class="text-2xl font-semibold text-white mb-4">Your Images</h2>
+                <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6 bg-gray-900/50 p-4 rounded-lg">
+                    <!-- Image previews will be injected here -->
+                </div>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button id="stitch-btn" class="w-full sm:w-auto custom-focus-ring flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Stitch Images
+                    </button>
+                    <button id="clear-btn" class="w-full sm:w-auto custom-focus-ring flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Result -->
+            <div id="result-step" class="hidden text-center mt-8">
+                 <h2 class="text-2xl font-semibold text-white mb-4">Stitched Result</h2>
+                 <div id="spinner" class="flex justify-center items-center p-8">
+                     <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400"></div>
+                 </div>
+                 <div class="bg-gray-900/50 p-2 rounded-lg inline-block max-w-full overflow-x-auto">
+                    <canvas id="stitched-canvas" class="rounded-md shadow-lg hidden"></canvas>
+                 </div>
+                 <div id="result-actions" class="mt-6 hidden">
+                     <a id="download-btn" href="#" download="stitched-image.png" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Download Image
+                     </a>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // DOM element references
+        const fileUpload = document.getElementById('file-upload');
+        const dropZone = document.getElementById('drop-zone');
+        const previewContainer = document.getElementById('preview-container');
+        const stitchBtn = document.getElementById('stitch-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const canvas = document.getElementById('stitched-canvas');
+        const downloadBtn = document.getElementById('download-btn');
+        const spinner = document.getElementById('spinner');
+
+        const uploadStep = document.getElementById('upload-step');
+        const previewStep = document.getElementById('preview-step');
+        const resultStep = document.getElementById('result-step');
+        const resultActions = document.getElementById('result-actions');
+        
+        // --- Drag and Drop Logic ---
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileUpload.files = files;
+                handleFileSelection();
+            }
+        });
+
+        // --- Core Application Logic ---
+        let uploadedFiles = [];
+
+        // Listen for file selection
+        fileUpload.addEventListener('change', handleFileSelection);
+
+        function handleFileSelection() {
+            if (fileUpload.files.length === 0) return;
+
+            // Reset previous state
+            resetPreviews();
+
+            uploadedFiles = Array.from(fileUpload.files);
+            
+            uploadedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative group fade-in';
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-auto object-cover rounded-md shadow-md border-2 border-gray-600';
+                    img.dataset.index = index;
+                    imgContainer.appendChild(img);
+                    previewContainer.appendChild(imgContainer);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Update UI
+            uploadStep.classList.add('hidden');
+            previewStep.classList.remove('hidden');
+            previewStep.classList.add('fade-in');
+            resultStep.classList.add('hidden');
+        }
+
+        // Stitch button click handler
+        stitchBtn.addEventListener('click', () => {
+            if (uploadedFiles.length === 0) {
+                alert('Please upload images first.');
+                return;
+            }
+
+            // Show the result area with a spinner
+            resultStep.classList.remove('hidden');
+            resultStep.classList.add('fade-in');
+            spinner.style.display = 'flex';
+            canvas.classList.add('hidden');
+            resultActions.classList.add('hidden');
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+
+            // Load all images and get their dimensions
+            const imagePromises = Array.from(previewContainer.querySelectorAll('img')).map(imgEl => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.src = imgEl.src;
+                });
+            });
+
+            // Using a timeout to ensure spinner is rendered before blocking the main thread
+            setTimeout(async () => {
+                try {
+                    const images = await Promise.all(imagePromises);
+                    
+                    let totalHeight = 0;
+                    let maxWidth = 0;
+    
+                    images.forEach(img => {
+                        totalHeight += img.height;
+                        if (img.width > maxWidth) {
+                            maxWidth = img.width;
+                        }
+                    });
+    
+                    // Set canvas dimensions
+                    canvas.width = maxWidth;
+                    canvas.height = totalHeight;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Fill with a background color in case of transparent images
+                    ctx.fillStyle = '#111827'; // bg-gray-900
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+                    let currentY = 0;
+                    images.forEach(img => {
+                        ctx.drawImage(img, 0, currentY);
+                        currentY += img.height;
+                    });
+    
+                    // Update UI after stitching
+                    spinner.style.display = 'none';
+                    canvas.classList.remove('hidden');
+                    resultActions.classList.remove('hidden');
+                    resultActions.classList.add('fade-in');
+    
+                    // Set download link
+                    downloadBtn.href = canvas.toDataURL('image/png');
+
+                } catch (error) {
+                    console.error("Error stitching images:", error);
+                    alert("An error occurred while stitching the images. Please check the console.");
+                    spinner.style.display = 'none';
+                }
+            }, 100);
+        });
+
+        // Clear button click handler
+        clearBtn.addEventListener('click', () => {
+            resetAll();
+        });
+        
+        function resetPreviews() {
+            previewContainer.innerHTML = '';
+            uploadedFiles = [];
+        }
+        
+        function resetAll() {
+            resetPreviews();
+            // Reset file input
+            fileUpload.value = '';
+
+            // Hide canvas and download button
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = 0;
+            canvas.height = 0;
+            
+            // Reset UI visibility
+            uploadStep.classList.remove('hidden');
+            uploadStep.classList.add('fade-in');
+            previewStep.classList.add('hidden');
+            resultStep.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
