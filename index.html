@@ -78,10 +78,7 @@
             <!-- Step 2: Preview & Actions -->
             <div id="preview-step" class="hidden">
                 <h2 class="text-2xl font-semibold text-white mb-4">Your Images</h2>
-                <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6 bg-gray-900/50 p-4 rounded-lg">
-                    <!-- Image previews will be injected here -->
-                </div>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
                     <button id="stitch-btn" class="w-full sm:w-auto custom-focus-ring flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                         Stitch Images
@@ -91,22 +88,39 @@
                         Clear All
                     </button>
                 </div>
+                <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 bg-gray-900/50 p-4 rounded-lg">
+                    <!-- Image previews will be injected here -->
+                </div>
             </div>
 
             <!-- Step 3: Result -->
             <div id="result-step" class="hidden text-center mt-8">
                  <h2 class="text-2xl font-semibold text-white mb-4">Stitched Result</h2>
+                 
+                 <!-- MODIFICATION: Download actions moved above the canvas preview -->
+                 <div id="result-actions" class="mb-6 hidden">
+                    <div class="flex flex-wrap justify-center items-center gap-3 sm:gap-4">
+                        <button id="download-png-btn" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download .png
+                        </button>
+                        <button id="download-jpg-btn" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-5 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download .jpg
+                        </button>
+                        <button id="download-webp-btn" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download .webp
+                        </button>
+                    </div>
+                 </div>
+
                  <div id="spinner" class="flex justify-center items-center p-8">
                      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400"></div>
                  </div>
-                 <div class="bg-gray-900/50 p-2 rounded-lg inline-block max-w-full overflow-x-auto">
+
+                 <div class="bg-gray-900/50 p-2 rounded-lg inline-block max-w-full max-h-[75vh] overflow-auto">
                     <canvas id="stitched-canvas" class="rounded-md shadow-lg hidden"></canvas>
-                 </div>
-                 <div id="result-actions" class="mt-6 hidden">
-                     <a id="download-btn" href="#" download="stitched-image.png" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        Download Image
-                     </a>
                  </div>
             </div>
         </main>
@@ -120,7 +134,6 @@
         const stitchBtn = document.getElementById('stitch-btn');
         const clearBtn = document.getElementById('clear-btn');
         const canvas = document.getElementById('stitched-canvas');
-        const downloadBtn = document.getElementById('download-btn');
         const spinner = document.getElementById('spinner');
 
         const uploadStep = document.getElementById('upload-step');
@@ -128,6 +141,10 @@
         const resultStep = document.getElementById('result-step');
         const resultActions = document.getElementById('result-actions');
         
+        const downloadPngBtn = document.getElementById('download-png-btn');
+        const downloadJpgBtn = document.getElementById('download-jpg-btn');
+        const downloadWebpBtn = document.getElementById('download-webp-btn');
+
         // --- Drag and Drop Logic ---
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -233,7 +250,7 @@
                     canvas.height = totalHeight;
                     const ctx = canvas.getContext('2d');
                     
-                    // Fill with a background color in case of transparent images
+                    // Fill with a background color in case of transparent images (important for JPG)
                     ctx.fillStyle = '#111827'; // bg-gray-900
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
@@ -249,9 +266,6 @@
                     resultActions.classList.remove('hidden');
                     resultActions.classList.add('fade-in');
     
-                    // Set download link
-                    downloadBtn.href = canvas.toDataURL('image/png');
-
                 } catch (error) {
                     console.error("Error stitching images:", error);
                     alert("An error occurred while stitching the images. Please check the console.");
@@ -263,6 +277,32 @@
         // Clear button click handler
         clearBtn.addEventListener('click', () => {
             resetAll();
+        });
+
+        // Helper function to trigger download from canvas
+        function downloadCanvasAsImage(format, quality, extension) {
+            const dataUrl = canvas.toDataURL(format, quality);
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `stitched-image.${extension}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Event listeners for download buttons
+        downloadPngBtn.addEventListener('click', () => {
+            downloadCanvasAsImage('image/png', 1.0, 'png');
+        });
+
+        downloadJpgBtn.addEventListener('click', () => {
+            // Quality is between 0.0 and 1.0
+            downloadCanvasAsImage('image/jpeg', 0.92, 'jpg');
+        });
+
+        downloadWebpBtn.addEventListener('click', () => {
+            // Quality is between 0.0 and 1.0
+            downloadCanvasAsImage('image/webp', 0.92, 'webp');
         });
         
         function resetPreviews() {
