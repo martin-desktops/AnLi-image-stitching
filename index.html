@@ -131,7 +131,7 @@
                      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400"></div>
                  </div>
 
-                 <div class="bg-gray-900/50 p-2 rounded-lg inline-block max-w-xs max-h-64 overflow-hidden">
+                 <div class="bg-gray-900/50 p-2 rounded-lg inline-block overflow-hidden">
                     <canvas id="stitched-canvas" class="rounded-md shadow-lg hidden w-full h-auto"></canvas>
                  </div>
             </div>
@@ -187,32 +187,43 @@
 
         // --- Core Application Logic ---
         let uploadedFiles = [];
+        let loadedImages = []; // Store loaded Image objects
 
         // Listen for file selection
         fileUpload.addEventListener('change', handleFileSelection);
 
-        function handleFileSelection() {
+        async function handleFileSelection() {
             if (fileUpload.files.length === 0) return;
 
             // Reset previous state
             resetPreviews();
 
             uploadedFiles = Array.from(fileUpload.files);
-            
-            uploadedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = 'relative group fade-in';
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'w-full h-auto object-cover rounded-md shadow-md border-2 border-gray-600';
-                    img.dataset.index = index;
-                    imgContainer.appendChild(img);
-                    previewContainer.appendChild(imgContainer);
-                };
-                reader.readAsDataURL(file);
+            loadedImages = []; // Clear previous loaded images
+
+            const imageLoadPromises = uploadedFiles.map((file, index) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'relative group fade-in';
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.className = 'w-full h-auto object-cover rounded-md shadow-md border-2 border-gray-600';
+                        img.dataset.index = index;
+                        imgContainer.appendChild(img);
+                        previewContainer.appendChild(imgContainer);
+                        
+                        img.onload = () => {
+                            loadedImages.push(img); // Store the loaded Image object
+                            resolve();
+                        };
+                    };
+                    reader.readAsDataURL(file);
+                });
             });
+
+            await Promise.all(imageLoadPromises); // Wait for all images to be loaded and displayed
 
             // Update UI
             uploadStep.classList.add('hidden');
@@ -221,9 +232,8 @@
             resultStep.classList.add('hidden');
         }
 
-        // Stitch button click handler
-        stitchBtn.addEventListener('click', () => {
-            if (uploadedFiles.length === 0) {
+        async function stitchAndDisplayImages() {
+            if (loadedImages.length === 0) {
                 alert('Please upload images first.');
                 return;
             }
@@ -232,65 +242,71 @@
             const scaleFactor = parseInt(sizeSlider.value) / 100;
 
             // Show the result area with a spinner
-            resultStep.classList.remove('hidden');
-            resultStep.classList.add('fade-in');
             spinner.style.display = 'flex';
             canvas.classList.add('hidden');
             resultActions.classList.add('hidden');
+            
+            // Ensure result step is visible if not already
+            resultStep.classList.remove('hidden');
+            resultStep.classList.add('fade-in');
+
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 
+            try {
+                let totalHeight = 0;
+                let maxWidth = 0;
 
-            // Load all images and get their dimensions
-            const imagePromises = Array.from(previewContainer.querySelectorAll('img')).map(imgEl => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.src = imgEl.src;
+                loadedImages.forEach(img => {
+                    totalHeight += img.naturalHeight;
+                    if (img.naturalWidth > maxWidth) {
+                        maxWidth = img.naturalWidth;
+                    }
                 });
-            });
 
-            // Using a timeout to ensure spinner is rendered before blocking the main thread
-            setTimeout(async () => {
-                try {
-                    const images = await Promise.all(imagePromises);
-                    
-                    let totalHeight = 0;
-                    let maxWidth = 0;
-    
-                    images.forEach(img => {
-                        totalHeight += img.height;
-                        if (img.width > maxWidth) {
-                            maxWidth = img.width;
-                        }
-                    });
-    
-                    // Apply scaling factor
-                    canvas.width = maxWidth * scaleFactor;
-                    canvas.height = totalHeight * scaleFactor;
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Fill with a background color in case of transparent images (important for JPG)
-                    ctx.fillStyle = '#111827'; // bg-gray-900
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-                    let currentY = 0;
-                    images.forEach(img => {
-                        ctx.drawImage(img, 0, currentY * scaleFactor, img.width * scaleFactor, img.height * scaleFactor);
-                        currentY += img.height;
-                    });
-    
-                    // Update UI after stitching
-                    spinner.style.display = 'none';
-                    canvas.classList.remove('hidden');
-                    resultActions.classList.remove('hidden');
-                    resultActions.classList.add('fade-in');
-    
-                } catch (error) {
-                    console.error("Error stitching images:", error);
-                    alert("An error occurred while stitching the images. Please check the console.");
-                    spinner.style.display = 'none';
-                }
-            }, 100);
+                console.log(`Original Max Width: ${maxWidth}, Total Height: ${totalHeight}`);
+                console.log(`Scale Factor: ${scaleFactor}`);
+
+                // Apply scaling factor
+                canvas.width = maxWidth * scaleFactor;
+                canvas.height = totalHeight * scaleFactor;
+
+                console.log(`Canvas Width: ${canvas.width}, Canvas Height: ${canvas.height}`);
+
+                const ctx = canvas.getContext('2d');
+
+                // Fill with a background color in case of transparent images (important for JPG)
+                ctx.fillStyle = '#111827'; // bg-gray-900
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                let currentY = 0;
+                loadedImages.forEach(img => {
+                    ctx.drawImage(img, 0, currentY * scaleFactor, img.naturalWidth * scaleFactor, img.naturalHeight * scaleFactor);
+                    currentY += img.naturalHeight;
+                });
+
+                // Update UI after stitching
+                spinner.style.display = 'none';
+                canvas.classList.remove('hidden');
+                resultActions.classList.remove('hidden');
+                resultActions.classList.add('fade-in');
+
+            } catch (error) {
+                console.error("Error stitching images:", error);
+                alert("An error occurred while stitching the images. Please check the console.");
+                spinner.style.display = 'none';
+            }
+        }
+
+        // Stitch button click handler
+        stitchBtn.addEventListener('click', () => {
+            stitchAndDisplayImages();
+        });
+
+        sizeSlider.addEventListener('change', () => {
+            // Re-stitch images when slider changes
+            if (loadedImages.length > 0) {
+                stitchAndDisplayImages();
+            }
         });
 
         sizeSlider.addEventListener('input', (e) => {
