@@ -104,14 +104,26 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             Download .png
                         </button>
-                        <button id="download-jpg-btn" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-5 rounded-lg transition-all transform hover:scale-105 shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            Download .jpg
-                        </button>
+                        <div class="flex flex-col items-center gap-2">
+                            <button id="download-jpg-btn" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-5 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                Download .jpg
+                            </button>
+                            <div class="flex items-center gap-2">
+                                <label for="jpg-quality" class="text-sm text-gray-400">Quality:</label>
+                                <input type="range" id="jpg-quality" min="10" max="100" value="92" class="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer custom-focus-ring">
+                                <span id="jpg-quality-value" class="text-sm text-gray-300 w-8 text-right">92%</span>
+                            </div>
+                        </div>
                         <button id="download-webp-btn" class="inline-flex items-center justify-center gap-2 custom-focus-ring bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg transition-all transform hover:scale-105 shadow-lg">
                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             Download .webp
                         </button>
+                    </div>
+                    <div class="flex justify-center items-center mt-4">
+                        <label for="size-slider" class="text-sm text-gray-400 mr-2">Size:</label>
+                        <input type="range" id="size-slider" min="30" max="300" value="100" class="w-48 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer custom-focus-ring">
+                        <span id="size-value" class="text-sm text-gray-300 w-12 text-right">100%</span>
                     </div>
                  </div>
 
@@ -144,6 +156,10 @@
         const downloadPngBtn = document.getElementById('download-png-btn');
         const downloadJpgBtn = document.getElementById('download-jpg-btn');
         const downloadWebpBtn = document.getElementById('download-webp-btn');
+        const jpgQualityInput = document.getElementById('jpg-quality');
+        const jpgQualityValueSpan = document.getElementById('jpg-quality-value');
+        const sizeSlider = document.getElementById('size-slider');
+        const sizeValueSpan = document.getElementById('size-value');
 
         // --- Drag and Drop Logic ---
         dropZone.addEventListener('dragover', (e) => {
@@ -212,6 +228,9 @@
                 return;
             }
 
+            // Get the scaling factor from the slider
+            const scaleFactor = parseInt(sizeSlider.value) / 100;
+
             // Show the result area with a spinner
             resultStep.classList.remove('hidden');
             resultStep.classList.add('fade-in');
@@ -245,9 +264,9 @@
                         }
                     });
     
-                    // Set canvas dimensions
-                    canvas.width = maxWidth;
-                    canvas.height = totalHeight;
+                    // Apply scaling factor
+                    canvas.width = maxWidth * scaleFactor;
+                    canvas.height = totalHeight * scaleFactor;
                     const ctx = canvas.getContext('2d');
                     
                     // Fill with a background color in case of transparent images (important for JPG)
@@ -256,7 +275,7 @@
     
                     let currentY = 0;
                     images.forEach(img => {
-                        ctx.drawImage(img, 0, currentY);
+                        ctx.drawImage(img, 0, currentY * scaleFactor, img.width * scaleFactor, img.height * scaleFactor);
                         currentY += img.height;
                     });
     
@@ -272,6 +291,10 @@
                     spinner.style.display = 'none';
                 }
             }, 100);
+        });
+
+        sizeSlider.addEventListener('input', (e) => {
+            sizeValueSpan.textContent = `${e.target.value}%`;
         });
 
         // Clear button click handler
@@ -295,9 +318,14 @@
             downloadCanvasAsImage('image/png', 1.0, 'png');
         });
 
+        jpgQualityInput.addEventListener('input', (e) => {
+            jpgQualityValueSpan.textContent = `${e.target.value}%`;
+        });
+
         downloadJpgBtn.addEventListener('click', () => {
             // Quality is between 0.0 and 1.0
-            downloadCanvasAsImage('image/jpeg', 0.92, 'jpg');
+            const quality = parseInt(jpgQualityInput.value) / 100;
+            downloadCanvasAsImage('image/jpeg', quality, 'jpg');
         });
 
         downloadWebpBtn.addEventListener('click', () => {
